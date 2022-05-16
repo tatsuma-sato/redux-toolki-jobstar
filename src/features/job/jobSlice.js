@@ -9,6 +9,7 @@ const initialState = {
   company: "",
   jobLocation: "",
   jobTypeOptions: ["full-time", "part-time", "remote", "intership"],
+  jobType: "full-time",
   statusOptions: ["interview", "declined", "pending"],
   status: "pending",
   isEditting: false,
@@ -18,6 +19,16 @@ const initialState = {
 const jobSlice = createSlice({
   name: "job",
   initialState,
+  reducers: {
+    handleChange: (state, { payload: { name, value } }) => {
+      state[name] = value;
+    },
+    clearValues: (state) => {
+      return { ...initialState };
+    },
+  },
 });
+
+export const { handleChange, clearValues } = jobSlice.actions;
 
 export default jobSlice.reducer;
