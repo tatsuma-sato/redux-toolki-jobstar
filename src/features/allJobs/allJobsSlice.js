@@ -7,7 +7,7 @@ const initialFilterState = {
   searchStatus: "all",
   searchType: "all",
   sort: "latest",
-  srotOptions: ["latest", "oldest", "a-z", "z-a"],
+  sortOptions: ["latest", "oldest", "a-z", "z-a"],
 };
 
 const initialState = {
@@ -39,6 +39,23 @@ export const getAllJobs = createAsyncThunk(
   }
 );
 
+export const showStats = createAsyncThunk(
+  "alljobs/showStats",
+  async (_, thunkAPI) => {
+    try {
+      const res = await customFetch.get("/jobs/stats", {
+        headers: {
+          authorization: `Bearer ${thunkAPI.getState().user.user.token}`,
+        },
+      });
+
+      return res.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response.data.msg);
+    }
+  }
+);
+
 const allJobSlice = createSlice({
   name: "allJobs",
   initialState,
@@ -48,6 +65,12 @@ const allJobSlice = createSlice({
     },
     hideLoading: (state) => {
       state.isLoading = false;
+    },
+    handleChange: (state, { payload: { name, value } }) => {
+      state[name] = value;
+    },
+    clearFilters: (state) => {
+      return { ...state, ...initialFilterState };
     },
   },
   extraReducers: (builder) => {
@@ -62,10 +85,26 @@ const allJobSlice = createSlice({
       .addCase(getAllJobs.rejected, (state, { payload }) => {
         state.isLoading = false;
         toast.error(payload);
+      })
+      .addCase(showStats.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(
+        showStats.fulfilled,
+        (state, { payload: { defaultStats, monthlyApplications } }) => {
+          state.isLoading = false;
+          state.stats = defaultStats;
+          state.monthlyApplications = monthlyApplications;
+        }
+      )
+      .addCase(showStats.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        toast.error(payload);
       });
   },
 });
 
-export const { showLoading, hideLoading } = allJobSlice.actions;
+export const { showLoading, hideLoading, handleChange, clearFilters } =
+  allJobSlice.actions;
 
 export default allJobSlice.reducer;
