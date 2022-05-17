@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
-import customFetch from "../../utils/axios";
 import { getUserFromLocalStorage } from "../../utils/localStorage";
+import { createJobThunk, deleteJobThunk, editJobThunk } from "./jobService";
 
 const initialState = {
   isLoading: false,
@@ -16,6 +16,12 @@ const initialState = {
   editJobId: "",
 };
 
+export const createJob = createAsyncThunk("job/createJob", createJobThunk);
+
+export const deleteJob = createAsyncThunk("job/deleteJob", deleteJobThunk);
+
+export const editJob = createAsyncThunk("job/editJob", editJobThunk);
+
 const jobSlice = createSlice({
   name: "job",
   initialState,
@@ -24,11 +30,48 @@ const jobSlice = createSlice({
       state[name] = value;
     },
     clearValues: (state) => {
-      return { ...initialState };
+      return {
+        ...initialState,
+        jobLocation: getUserFromLocalStorage()?.location || "",
+      };
     },
+    setEditJob: (state, { payload }) => {
+      return { ...state, isEditting: true, ...payload };
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(createJob.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(createJob.fulfilled, (state) => {
+        state.isLoading = false;
+        toast.success("Job Created");
+      })
+      .addCase(createJob.rejected, (state, payload) => {
+        state.isLoading = false;
+        toast.error(payload);
+      })
+      .addCase(deleteJob.fulfilled, (state, { payload }) => {
+        toast.success(payload);
+      })
+      .addCase(deleteJob.rejected, (state, payload) => {
+        toast.error(payload);
+      })
+      .addCase(editJob.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(editJob.fulfilled, (state) => {
+        state.isLoading = false;
+        toast.success("Job Modified");
+      })
+      .addCase(editJob.rejected, (state, payload) => {
+        state.isLoading = false;
+        toast.error(payload);
+      });
   },
 });
 
-export const { handleChange, clearValues } = jobSlice.actions;
+export const { handleChange, clearValues, setEditJob } = jobSlice.actions;
 
 export default jobSlice.reducer;
